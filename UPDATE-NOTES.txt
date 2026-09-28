@@ -1,0 +1,25 @@
+Minimal A + C update
+
+Person A: StatusDisplay.h/.cpp implement the concrete observer. main.cpp tests
+state transitions, two observers, duplicate registration and unsubscription.
+
+Person C: Command.h contains Command, three concrete commands and OperatorConsole.
+AlertAdapter.h/.cpp contain the alert interface, legacy service and adapter.
+EmergencyFacade.h/.cpp coordinate activation, Medical, Security, Access and alerts.
+ResponseServices.h declares the three small interfaces for Person B to implement.
+All receiver references are borrowed and must outlive the commands/facade.
+
+main.cpp contains test receivers in place of Person B. Each records real calls;
+checks print PASS and exit with 1 on failure. This is an A+C test program, not the
+final six-pattern application. Person B's Mediator still needs integration.
+
+The old empty handleMedical and handleEvac files are not used. EmergencyFacade
+replaces their intended role; no separate evacuation facade is needed.
+
+In your COS214-Prac5 folder compile with:
+g++ -std=c++11 -Wall -Wextra -Wpedantic *.cpp -o campusguard.exe
+Then run in PowerShell:
+.\campusguard.exe
+
+Do not compile a second test main alongside main.cpp.
+
