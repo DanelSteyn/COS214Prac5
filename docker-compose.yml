@@ -1,0 +1,23 @@
+services:
+  campusguard:
+    build: .
+    image: campusguard:latest
+    container_name: campusguard
+
+  valgrind:
+    build: .
+    image: campusguard:latest
+    profiles: ["tools"]
+    command: ["make", "valgrind"]
+
+  gdb:
+    build: .
+    image: campusguard:latest
+    profiles: ["tools"]
+    command: ["gdb", "./campusguard"]
+    stdin_open: true
+    tty: true
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined

@@ -1,9 +1,10 @@
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
-RUN apt-get update && apt-get install -y g++ make gdb valdrind && rm -f /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends g++ make gdb valgrind \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /campusGuardApp
-
+WORKDIR /campusguard
 COPY . .
 
 RUN make
