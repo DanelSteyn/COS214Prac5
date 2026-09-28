@@ -6,6 +6,7 @@ class AlertService {
 public:
     virtual ~AlertService() {}
     virtual void sendAlert(const Incident& incident) = 0;
+    virtual void sendNotice(int severity, const std::string& location, const std::string& message) = 0;
 };
 class LegacyAlertSystem {
 public:
@@ -20,6 +21,7 @@ class AlertAdapter : public AlertService {
 public:
     explicit AlertAdapter(LegacyAlertSystem& legacy) : legacy_(legacy) {}
     void sendAlert(const Incident& incident) override;
+    void sendNotice(int severity, const std::string& location, const std::string& message) override;
 private:
     LegacyAlertSystem& legacy_;
 };
