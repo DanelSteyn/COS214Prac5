@@ -1,52 +1,39 @@
-#include "Incident.h"
-#include "StatusDisplay.h"
+#include "AccessControl.h"
+#include "AlertAdapter.h"
+#include "AlertDesk.h"
+#include "CampusMediator.h"
 #include "Command.h"
 #include "EmergencyFacade.h"
+#include "Incident.h"
+#include "MedicalTeam.h"
+#include "SecurityTeam.h"
+#include "StatusDisplay.h"
 #include <iostream>
 
-// Temporary receivers until Person B's classes are added.
-class TestSecurity : public SecurityResponse {
-public:
-    int assignedIncident = 0;
-    void dispatch(const Incident& incident) override {
-        assignedIncident = incident.getId();
-        std::cout << "Security dispatched to " << incident.getLocation() << '\n';
-    }
-};
-
-class TestMedical : public MedicalResponse {
-public:
-    int assignedIncident = 0;
-    void dispatch(const Incident& incident) override {
-        assignedIncident = incident.getId();
-        std::cout << "Medical dispatched to " << incident.getLocation() << '\n';
-    }
-};
-
-class TestAccess : public AccessResponse {
-public:
-    std::string restrictedArea;
-    void restrictAccess(const Incident& incident) override {
-        restrictedArea = incident.getLocation();
-        std::cout << "Access restricted at " << restrictedArea << '\n';
-    }
-};
+static void banner(const char* title) { std::cout << "\n=== " << title << " ===\n"; }
 
 int main() {
-    TestSecurity security;
-    TestMedical medical;
-    TestAccess access;
     LegacyAlertSystem legacy;
-    AlertAdapter alerts(legacy);
+    AlertAdapter adapter(legacy);
+    SecurityTeam security;
+    MedicalTeam medical(2);
+    AccessControl access;
+    AlertDesk alerts(&adapter);
+    CampusMediator mediator;
+    mediator.registerSecurity(security);
+    mediator.registerMedical(medical);
+    mediator.registerAccess(access);
+    mediator.registerAlerts(alerts);
     StatusDisplay display;
     OperatorConsole console;
+    EmergencyFacade facade(security, medical, access, alerts);
 
-    // Example 1: State, Observer, Command and Adapter.
-    std::cout << "\nFire emergency!!\n";
+    banner("Scenario 1: fire / evacuation (State, Observer, Command, Mediator, Adapter)");
     Incident fire(1, "Engineering", "Fire evacuation");
     fire.addObserver(display);
+    fire.addObserver(mediator);
     std::cout << "Starting state: " << fire.getStatus() << '\n';
-    fire.activate(); 
+    fire.activate();
 
     DispatchSecurityCommand dispatch(security, fire);
     SecureAreaCommand secure(access, fire);
@@ -55,21 +42,29 @@ int main() {
     console.execute(secure);
     console.execute(alert);
 
-    fire.resolve(); 
+    fire.resolve();
     if (!fire.activate()) {
         std::cout << "Cannot activate an already resolved incident.\n";
     }
     fire.removeObserver(display);
+    fire.removeObserver(mediator);
 
-    // Example 2: The facade runs the medical workflow in one call.
-    std::cout << "\nMedical emergency!!!\n";
+    banner("Scenario 2: medical emergency (Facade)");
     Incident injury(2, "Library", "Student needs medical assistance");
     injury.addObserver(display);
-    EmergencyFacade facade(security, medical, access, alerts);
+    injury.addObserver(mediator);
     if (facade.handleMedicalEmergency(injury)) {
         injury.resolve();
     }
+    if (!facade.handleMedicalEmergency(injury)) {
+        std::cout << "Facade refused to re-run a resolved incident.\n";
+    }
     injury.removeObserver(display);
+    injury.removeObserver(mediator);
 
+    banner("Other invalid operations");
+    access.unlockArea("Gym");
+    access.reportBreach(2, "Gym");
+    std::cout << "\nAlerts sent through AlertDesk: " << alerts.alertsSent() << '\n';
     return 0;
 }
