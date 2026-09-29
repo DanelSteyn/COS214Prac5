@@ -6,7 +6,6 @@ class Incident;
 class IncidentObserver {
 public:
     virtual ~IncidentObserver() {}
-    // Inspect the incident after a successful change
     virtual void update(const Incident& incident) = 0;
 };
 

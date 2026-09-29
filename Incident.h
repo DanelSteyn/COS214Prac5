@@ -12,16 +12,16 @@ class Incident {
 public:
     Incident(int id, const std::string& location, const std::string& description);
     ~Incident();
-    Incident(const Incident&) = delete;
-    Incident& operator=(const Incident&) = delete;
+    Incident(const Incident&) = delete; //made incident non-copyable to avoid creating ambiguous ownership 
+    Incident& operator=(const Incident&) = delete; //of the state and observers (due to the unique_ptr)
 
     int getId() const;
     const std::string& getLocation() const;
     const std::string& getDescription() const;
     std::string getStatus() const;
 
-    // Return false for an invalid transition
-    bool activate();
+
+    bool activate(); //delegates to current incedent state
     bool resolve();
 
     // Non-owning subscriptions. Observer must remain alive until removed
@@ -32,10 +32,10 @@ private:
     int id_;
     std::string location_;
     std::string description_;
-    std::unique_ptr<IncidentState> state_;
+    std::unique_ptr<IncidentState> state_; //(transitions) exclusive ownership of the state
     std::vector<IncidentObserver*> observers_;
 
-    bool transitionTo(std::unique_ptr<IncidentState> next);
+    bool transitionTo(std::unique_ptr<IncidentState> next); //where state and observer connect
     void notifyObservers();
 };
 
